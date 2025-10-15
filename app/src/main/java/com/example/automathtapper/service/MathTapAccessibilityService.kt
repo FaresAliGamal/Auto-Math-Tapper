@@ -3,25 +3,27 @@ package com.example.automathtapper.service
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.graphics.Path
+import android.media.projection.MediaProjectionManager
+import android.util.Log
+import android.view.accessibility.AccessibilityEvent
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.google.mlkit.vision.common.InputImage
+import android.graphics.Bitmap
+import android.graphics.PixelFormat
 import android.media.ImageReader
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
-import android.view.accessibility.AccessibilityEvent
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
 class MathTapAccessibilityService : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        Log.d("MathTapper", "Service connected.")
+        Log.d("MathTapper", "Service connected")
         startSolvingLoop()
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
-
     override fun onInterrupt() {}
 
     private fun startSolvingLoop() {
@@ -30,38 +32,47 @@ class MathTapAccessibilityService : AccessibilityService() {
 
         handler.post(object : Runnable {
             override fun run() {
-                takeScreenshot(DISPLAY_ID_MAIN, mainExecutor) { result ->
-                    val image = result?.hardwareBuffer?.let {
-                        InputImage.fromMediaImage(result.image, 0)
-                    } ?: return@takeScreenshot
+                try {
+                    val display = display ?: return
+                    val width = display.width
+                    val height = display.height
 
-                    recognizer.process(image)
-                        .addOnSuccessListener { visionText ->
-                            val allText = visionText.text
-                            Log.d("MathTapper", "Detected: $allText")
+                    val reader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2)
+                    display.requestCaptureSurface(reader.surface)
 
-                            val match = Regex("(\\d+)\\s*([+\\-x*/])\\s*(\\d+)").find(allText)
+                    val image = reader.acquireLatestImage() ?: return
+                    val planes = image.planes
+                    val buffer = planes[0].buffer
+                    val pixelStride = planes[0].pixelStride
+                    val rowStride = planes[0].rowStride
+                    val rowPadding = rowStride - pixelStride * width
+                    val bitmap = Bitmap.createBitmap(
+                        width + rowPadding / pixelStride, height, Bitmap.Config.ARGB_8888
+                    )
+                    bitmap.copyPixelsFromBuffer(buffer)
+                    image.close()
+
+                    val input = InputImage.fromBitmap(bitmap, 0)
+
+                    recognizer.process(input)
+                        .addOnSuccessListener { result ->
+                            val text = result.text
+                            Log.d("MathTapper", "Detected text: $text")
+                            val match = Regex("(\\d+)\\s*([+\\-x*/])\\s*(\\d+)").find(text)
                             if (match != null) {
                                 val (a, op, b) = match.destructured
-                                val result = when (op) {
+                                val calc = when (op) {
                                     "+" -> a.toInt() + b.toInt()
                                     "-" -> a.toInt() - b.toInt()
                                     "x", "*" -> a.toInt() * b.toInt()
                                     "/" -> if (b.toInt() != 0) a.toInt() / b.toInt() else 0
                                     else -> 0
                                 }
-
-                                val answer = result.toString()
-                                Log.d("MathTapper", "Answer = $answer")
-
-                                visionText.textBlocks.forEach { block ->
-                                    if (block.text.trim() == answer) {
-                                        val box = block.boundingBox ?: return@forEach
-                                        tapAt(
-                                            box.centerX().toFloat(),
-                                            box.centerY().toFloat()
-                                        )
-                                        Log.d("MathTapper", "Tapped on $answer ✅")
+                                Log.d("MathTapper", "Answer: $calc")
+                                result.textBlocks.forEach { block ->
+                                    if (block.text.trim() == calc.toString()) {
+                                        val rect = block.boundingBox
+                                        if (rect != null) tapAt(rect.centerX().toFloat(), rect.centerY().toFloat())
                                     }
                                 }
                             }
@@ -70,10 +81,12 @@ class MathTapAccessibilityService : AccessibilityService() {
                             Log.e("MathTapper", "OCR failed: ${it.message}")
                         }
 
-                    result?.close()
+                    reader.close()
+                } catch (e: Exception) {
+                    Log.e("MathTapper", "Loop error: ${e.message}")
                 }
 
-                handler.postDelayed(this, 2000)
+                handler.postDelayed(this, 3000)
             }
         })
     }
