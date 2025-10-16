@@ -1,50 +1,56 @@
 package com.example.automathtapper.service
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.Service
+import android.app.*
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.example.automathtapper.R
 
 class ProjectionFgService : Service() {
     companion object {
-        const val CHANNEL_ID = "auto_math_projection"
-        const val NOTIF_ID = 42
+        @Volatile var ready: Boolean = false
+            private set
+
+        fun ensureRunning(ctx: Context) {
+            val i = Intent(ctx, ProjectionFgService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ctx.startForegroundService(i)
+            } else {
+                ctx.startService(i)
+            }
+        }
     }
 
     override fun onCreate() {
         super.onCreate()
+        val channelId = "projection_fg"
+        val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val nm = getSystemService(NotificationManager::class.java)
-            if (nm.getNotificationChannel(CHANNEL_ID) == null) {
-                val ch = NotificationChannel(
-                    CHANNEL_ID,
-                    "Screen capture",
-                    NotificationManager.IMPORTANCE_LOW
+            if (nm.getNotificationChannel(channelId) == null) {
+                nm.createNotificationChannel(
+                    NotificationChannel(channelId, "Screen capture", NotificationManager.IMPORTANCE_LOW)
                 )
-                ch.setShowBadge(false)
-                nm.createNotificationChannel(ch)
             }
         }
-        val notif: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+        val notif = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(android.R.drawable.stat_sys_warning)
             .setContentTitle("AutoMathTapper")
-            .setContentText("Screen capture active")
+            .setContentText("Ready for screen capture")
             .setOngoing(true)
             .build()
-
-        @Suppress("DEPRECATION")
-        startForeground(
-            NOTIF_ID,
-            notif,
-            android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-        )
+        startForeground(1001, notif)
+        ready = true
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        return START_STICKY
+    }
+
+    override fun onDestroy() {
+        ready = false
+        super.onDestroy()
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 }

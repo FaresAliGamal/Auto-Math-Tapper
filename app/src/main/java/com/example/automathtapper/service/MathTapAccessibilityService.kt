@@ -2,7 +2,6 @@ package com.example.automathtapper.service
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
-import android.content.Intent
 import android.graphics.*
 import android.media.Image
 import android.media.ImageReader
@@ -39,17 +38,6 @@ class MathTapAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
     override fun onInterrupt() {}
 
-    private fun startProjectionFg() {
-        try {
-            val i = Intent(this, ProjectionFgService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i)
-        } catch (_: Throwable) { }
-    }
-
-    private fun stopProjectionFg() {
-        runCatching { stopService(Intent(this, ProjectionFgService::class.java)) }
-    }
-
     private fun addFloating() {
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
 
@@ -72,10 +60,9 @@ class MathTapAccessibilityService : AccessibilityService() {
                 running = !running
                 text = if (running) "⏸" else "▶"
                 if (running) {
-                    startProjectionFg()
-                    setStatus("Started")
+                    ProjectionFgService.ensureRunning(this@MathTapAccessibilityService)
+                    setStatus("Starting…")
                 } else {
-                    stopProjectionFg()
                     setStatus("Paused")
                 }
             }
@@ -136,7 +123,15 @@ class MathTapAccessibilityService : AccessibilityService() {
 
     private fun captureSolveTap() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return
-        if (!ProjectionStore.hasProjection()) { setStatus("Need screen-capture permission"); return }
+        if (!ProjectionFgService.ready) {
+            setStatus("Waiting for foreground service…")
+            ProjectionFgService.ensureRunning(this)
+            return
+        }
+        if (!ProjectionStore.hasProjection()) {
+            setStatus("Need screen-capture permission")
+            return
+        }
 
         val dm = resources.displayMetrics
         val w = dm.widthPixels
@@ -211,7 +206,6 @@ class MathTapAccessibilityService : AccessibilityService() {
         btn?.let { runCatching { wm.removeView(it) } }
         status?.let { runCatching { wm.removeView(it) } }
         btn = null; status = null
-        stopProjectionFg()
     }
 
     private object WindowLayout {
