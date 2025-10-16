@@ -1,3 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+branch="fix/ocr-mlkit"
+git checkout -B "$branch"
+
+mkdir -p app/src/main/java/com/example/automathtapper
+mkdir -p app/src/main/java/com/example/automathtapper/service
+mkdir -p app/src/main/res/xml
+mkdir -p .github/workflows
+
+cat > app/src/main/java/com/example/automathtapper/MainActivity.kt <<'KOT'
+package com.example.automathtapper
+
+import com.example.automathtapper.ErrorBus
+import com.example.automathtapper.ErrorOverlay
+
+import android.os.Bundle
+import android.widget.SeekBar
+import androidx.appcompat.app.AppCompatActivity
+
+class MainActivity : AppCompatActivity() {
+    companion object {
+        const val PREFS = "prefs"
+        const val KEY_INTERVAL_MS = "interval_ms"
+        const val DEFAULT_INTERVAL = 1000
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        ErrorOverlay.init(applicationContext)
+        ErrorBus.post("Ready")
+
+        val sb = SeekBar(this)
+        sb.max = 4800
+        sb.progress = (getSharedPreferences(PREFS, MODE_PRIVATE).getInt(KEY_INTERVAL_MS, DEFAULT_INTERVAL) - 200)
+        sb.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                val ms = p1 + 200
+                getSharedPreferences(PREFS, MODE_PRIVATE).edit().putInt(KEY_INTERVAL_MS, ms).apply()
+            }
+            override fun onStartTrackingTouch(p0: SeekBar?) {}
+            override fun onStopTrackingTouch(p0: SeekBar?) {}
+        })
+        setContentView(sb)
+    }
+}
+KOT
+
+cat > app/src/main/java/com/example/automathtapper/service/MathTapAccessibilityService.kt <<'KOT'
 package com.example.automathtapper.service
 
 import com.example.automathtapper.ErrorBus
@@ -228,3 +279,162 @@ class MathTapAccessibilityService : AccessibilityService() {
             ).apply { gravity = Gravity.TOP or Gravity.START; this.x = x; this.y = y }
     }
 }
+KOT
+
+cat > app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt <<'KOT'
+package com.example.automathtapper.service
+
+import com.example.automathtapper.ErrorBus
+import com.example.automathtapper.ErrorOverlay
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
+import android.content.Intent
+import android.os.Build
+import android.os.IBinder
+import androidx.core.app.NotificationCompat
+
+class ProjectionFgService : Service() {
+    companion object {
+        @Volatile var ready: Boolean = false
+        fun ensureRunning(ctx: android.content.Context) {
+            try {
+                val i = Intent(ctx, ProjectionFgService::class.java)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    ctx.startForegroundService(i)
+                else
+                    ctx.startService(i)
+            } catch (e: Throwable) {
+                ErrorBus.post("FGS: " + (e.message ?: e.toString()))
+            }
+        }
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        try {
+            ErrorOverlay.init(applicationContext)
+            val cid = "proj_fg"
+            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (nm.getNotificationChannel(cid) == null)
+                    nm.createNotificationChannel(NotificationChannel(cid, "Projection FG", NotificationManager.IMPORTANCE_LOW))
+            }
+
+            val notif: Notification = NotificationCompat.Builder(this, cid)
+                .setSmallIcon(android.R.drawable.ic_media_play)
+                .setContentTitle("Projection FG")
+                .setContentText("Ready")
+                .setOngoing(true)
+                .build()
+            ErrorBus.post("Starting FGS")
+            startForeground(1001, notif)
+            ready = true
+        } catch (e: Throwable) {
+            ErrorBus.post("FGS: " + (e.message ?: e.toString()))
+        }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onDestroy() {
+        try {
+            ready = false
+            super.onDestroy()
+        } catch (e: Throwable) {
+            ErrorBus.post("FGS: " + (e.message ?: e.toString()))
+        }
+    }
+}
+KOT
+
+cat > app/src/main/res/xml/accessibility_service_config.xml <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowContentChanged|typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:notificationTimeout="100"
+    android:canPerformGestures="true"
+    android:settingsActivity="" />
+XML
+
+manifest="app/src/main/AndroidManifest.xml"
+if ! grep -q 'android.permission.FOREGROUND_SERVICE"' "$manifest" 2>/dev/null; then
+  sed -i '1a <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>' "$manifest"
+fi
+sed -i 's#android:resource="@xml/accessibilityservice"#android:resource="@xml/accessibility_service_config"#g' "$manifest" || true
+if ! grep -q 'service.MathTapAccessibilityService' "$manifest"; then
+  sed -i '/<application[^>]*>/a \
+    <service android:name=".service.MathTapAccessibilityService" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" android:exported="false">\
+      <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>\
+      <meta-data android:name="android.accessibilityservice" android:resource="@xml/accessibility_service_config" />\
+    </service>' "$manifest"
+fi
+if ! grep -q 'service.ProjectionFgService' "$manifest"; then
+  sed -i '/<application[^>]*>/a \
+    <service android:name=".service.ProjectionFgService" android:exported="false" android:foregroundServiceType="mediaProjection" />' "$manifest"
+fi
+
+appkts="app/build.gradle.kts"
+sed -i 's/\bcompileSdk\s*=\s*3[0-3]\b/compileSdk = 34/g; s/\btargetSdk\s*=\s*3[0-3]\b/targetSdk = 34/g' "$appkts" || true
+if ! grep -q 'text-recognition' "$appkts"; then
+  awk '
+    BEGIN{ins=0}
+    /dependencies\s*\{/{
+      print; print "    implementation(\"com.google.mlkit:text-recognition:16.1.0\")"; ins=1; next
+    }
+    {print}
+    END{
+      if(ins==0){print "dependencies {\n    implementation(\"com.google.mlkit:text-recognition:16.1.0\")\n}"}}
+  ' "$appkts" > "$appkts.tmp" && mv "$appkts.tmp" "$appkts"
+fi
+if ! grep -q 'kotlinOptions' "$appkts"; then
+  sed -i '/android\s*{/a \    kotlinOptions {\n        jvmTarget = "17"\n    }' "$appkts"
+fi
+if ! grep -q 'kotlin\s*{[^}]*jvmToolchain(17)' "$appkts"; then
+  printf '\n%s\n' 'kotlin { jvmToolchain(17) }' >> "$appkts"
+fi
+
+cat > .github/workflows/build.yml <<'YML'
+name: Build Auto-Math-Tapper
+on:
+  push:
+    branches: [ main, 'fix/ocr-mlkit' ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Build APK
+      run: ./gradlew --no-daemon clean assembleDebug
+
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Auto-Math-Tapper-APK
+        path: app/build/outputs/apk/debug/app-debug.apk
+YML
+
+./gradlew --no-daemon clean assembleDebug || true
+
+git add -A
+git commit -m "fix: ML Kit OCR, accessibility config, projection FG service; SDK 34; CI workflow" || true
+git push -u origin "$branch" || true
+
+echo "Done. Open a PR from $branch to main, then check Actions artifacts for the APK."

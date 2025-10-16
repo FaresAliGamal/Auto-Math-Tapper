@@ -1,0 +1,92 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.7/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:clean
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors
+> Task :app:generateDebugResValues
+> Task :app:dataBindingMergeDependencyArtifactsDebug
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:parseDebugLocalResources
+> Task :app:mergeDebugResources
+> Task :app:dataBindingTriggerDebug
+> Task :app:dataBindingGenBaseClassesDebug
+> Task :app:mapDebugSourceSetPaths
+> Task :app:checkDebugAarMetadata
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+
+> Task :app:processDebugMainManifest
+/workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:8:5-76 Warning:
+	Element uses-permission#android.permission.FOREGROUND_SERVICE at AndroidManifest.xml:8:5-76 duplicated with element declared at AndroidManifest.xml:4:5-77
+/workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:9:5-93 Warning:
+	Element uses-permission#android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION at AndroidManifest.xml:9:5-93 duplicated with element declared at AndroidManifest.xml:2:5-94
+
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:compressDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:checkDebugDuplicateClasses
+> Task :app:mergeDebugStartupProfile UP-TO-DATE
+> Task :app:processDebugResources
+> Task :app:mergeExtDexDebug
+> Task :app:mergeLibDexDebug
+> Task :app:mergeDebugJniLibFolders
+> Task :app:mergeDebugNativeLibs NO-SOURCE
+> Task :app:stripDebugDebugSymbols NO-SOURCE
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+> Task :app:writeDebugSigningConfigVersions
+
+> Task :app:kaptGenerateStubsDebugKotlin FAILED
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/MainActivity.kt:34:2 Missing '}
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:21:11 Expecting member declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:21:17 Expecting member declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:21:18 Expecting member declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:21:19 Expecting member declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:21:21 Expecting member declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:21:30 Expecting member declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:21:32 Expecting member declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:34:19 Expecting ')'
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:34:19 Unexpected tokens (use ';' to separate expressions on the same line)
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:35:6 Expecting 'catch' or 'finally'
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:45:11 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:45:17 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:45:18 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:45:19 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:45:21 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:45:30 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:45:32 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:46:5 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:53:11 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:53:17 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:53:18 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:53:19 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:53:21 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:53:30 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:53:32 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:54:5 Expecting a top level declaration
+e: file:///workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt:56:1 Expecting a top level declaration
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:kaptGenerateStubsDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1m 50s
+32 actionable tasks: 31 executed, 1 up-to-date
