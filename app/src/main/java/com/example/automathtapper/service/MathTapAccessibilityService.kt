@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.Display
 import android.view.Gravity
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
@@ -19,6 +20,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import android.widget.TextView
+import java.util.concurrent.Executor
 
 class MathTapAccessibilityService : AccessibilityService() {
 
@@ -86,41 +88,50 @@ class MathTapAccessibilityService : AccessibilityService() {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun captureAndSolveApi33() {
         try {
-            takeScreenshot(DISPLAY_ID_MAIN, mainExecutor) { res ->
-                if (res == null) return@takeScreenshot
-                val bmp = Bitmap.wrapHardwareBuffer(res.hardwareBuffer, res.colorSpace)
-                if (bmp != null) {
-                    val image = InputImage.fromBitmap(bmp, 0)
-                    recognizer.process(image)
-                        .addOnSuccessListener { txt ->
-                            val all = txt.text
-                            val m = Regex("(\\d+)\\s*([+\\-x*/×÷])\\s*(\\d+)").find(all)
-                            if (m != null) {
-                                val (a, op, b) = m.destructured
-                                val ans = when (op) {
-                                    "+", "＋" -> a.toInt() + b.toInt()
-                                    "-", "−" -> a.toInt() - b.toInt()
-                                    "x", "×", "*" -> a.toInt() * b.toInt()
-                                    "/", "÷" -> if (b.toInt() != 0) a.toInt() / b.toInt() else 0
-                                    else -> Int.MIN_VALUE
-                                }.toString()
+            // استخدم Display.DEFAULT_DISPLAY بدل DISPLAY_ID_MAIN
+            val displayId = Display.DEFAULT_DISPLAY
+            val exec: Executor = mainExecutor
 
-                                txt.textBlocks.forEach { block ->
-                                    if (block.text.trim() == ans) {
-                                        block.boundingBox?.let { r ->
-                                            tapAt(r.centerX().toFloat(), r.centerY().toFloat())
-                                            Log.d("MathTapper", "Tap $ans at ${r.centerX()},${r.centerY()}")
-                                            return@addOnSuccessListener
+            takeScreenshot(displayId, exec, object : AccessibilityService.TakeScreenshotCallback {
+                override fun onScreenshotTaken(res: AccessibilityService.ScreenshotResult?) {
+                    if (res == null) return
+                    val bmp = Bitmap.wrapHardwareBuffer(res.hardwareBuffer, res.colorSpace)
+                    try {
+                        if (bmp != null) {
+                            val image = InputImage.fromBitmap(bmp, 0)
+                            recognizer.process(image)
+                                .addOnSuccessListener { txt ->
+                                    val all = txt.text
+                                    val m = Regex("(\\d+)\\s*([+\\-x*/×÷])\\s*(\\d+)").find(all)
+                                    if (m != null) {
+                                        val (a, op, b) = m.destructured
+                                        val ans = when (op) {
+                                            "+", "＋" -> a.toInt() + b.toInt()
+                                            "-", "−" -> a.toInt() - b.toInt()
+                                            "x", "×", "*" -> a.toInt() * b.toInt()
+                                            "/", "÷" -> if (b.toInt() != 0) a.toInt() / b.toInt() else 0
+                                            else -> Int.MIN_VALUE
+                                        }.toString()
+
+                                        txt.textBlocks.forEach { block ->
+                                            if (block.text.trim() == ans) {
+                                                block.boundingBox?.let { r ->
+                                                    tapAt(r.centerX().toFloat(), r.centerY().toFloat())
+                                                    Log.d("MathTapper", "Tap $ans at ${r.centerX()},${r.centerY()}")
+                                                    return@addOnSuccessListener
+                                                }
+                                            }
                                         }
                                     }
                                 }
-                            }
+                                .addOnFailureListener { e -> Log.e("MathTapper", "OCR error: ${e.message}") }
                         }
-                        .addOnFailureListener { e -> Log.e("MathTapper", "OCR error: ${e.message}") }
+                    } finally {
+                        res.hardwareBuffer.close()
+                        bmp?.recycle()
+                    }
                 }
-                res.hardwareBuffer.close()
-                bmp?.recycle()
-            }
+            })
         } catch (e: Throwable) {
             Log.e("MathTapper", "screenshot failure: ${e.message}")
         }
