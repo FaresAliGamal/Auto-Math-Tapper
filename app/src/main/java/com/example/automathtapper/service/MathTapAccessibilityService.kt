@@ -2,6 +2,7 @@ package com.example.automathtapper.service
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
+import android.content.Intent
 import android.graphics.*
 import android.media.Image
 import android.media.ImageReader
@@ -10,7 +11,6 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.Gravity
-import android.graphics.PixelFormat
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.widget.TextView
@@ -39,6 +39,17 @@ class MathTapAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
     override fun onInterrupt() {}
 
+    private fun startProjectionFg() {
+        try {
+            val i = Intent(this, ProjectionFgService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i)
+        } catch (_: Throwable) { }
+    }
+
+    private fun stopProjectionFg() {
+        runCatching { stopService(Intent(this, ProjectionFgService::class.java)) }
+    }
+
     private fun addFloating() {
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
 
@@ -49,13 +60,7 @@ class MathTapAccessibilityService : AccessibilityService() {
             setBackgroundColor(Color.parseColor("#88000000"))
             setPadding(16, 12, 16, 12)
         }
-        wm.addView(status, WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT
-        ).apply { gravity = Gravity.TOP or Gravity.START; x = 24; y = 120 })
+        wm.addView(status, WindowLayout.params(24, 120))
 
         btn = TextView(this).apply {
             text = "▶"
@@ -66,16 +71,16 @@ class MathTapAccessibilityService : AccessibilityService() {
             setOnClickListener {
                 running = !running
                 text = if (running) "⏸" else "▶"
-                setStatus(if (running) "Started" else "Paused")
+                if (running) {
+                    startProjectionFg()
+                    setStatus("Started")
+                } else {
+                    stopProjectionFg()
+                    setStatus("Paused")
+                }
             }
         }
-        wm.addView(btn, WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT
-        ).apply { gravity = Gravity.TOP or Gravity.START; x = 24; y = 200 })
+        wm.addView(btn, WindowLayout.params(24, 200))
     }
 
     private fun setStatus(s: String) { status?.post { status?.text = s }; Log.d("MathTapper", s) }
@@ -88,9 +93,7 @@ class MathTapAccessibilityService : AccessibilityService() {
     private fun loop() {
         handler.post(object : Runnable {
             override fun run() {
-                if (running) {
-                    captureSolveTap()
-                }
+                if (running) captureSolveTap()
                 handler.postDelayed(this, interval())
             }
         })
@@ -133,10 +136,8 @@ class MathTapAccessibilityService : AccessibilityService() {
 
     private fun captureSolveTap() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return
-        if (!ProjectionStore.hasProjection()) {
-            setStatus("Need screen-capture permission")
-            return
-        }
+        if (!ProjectionStore.hasProjection()) { setStatus("Need screen-capture permission"); return }
+
         val dm = resources.displayMetrics
         val w = dm.widthPixels
         val h = dm.heightPixels
@@ -145,12 +146,7 @@ class MathTapAccessibilityService : AccessibilityService() {
         val reader = ImageReader.newInstance(w, h, PixelFormat.RGBA_8888, 2)
         val proj = ProjectionStore.getProjection(this) ?: run { setStatus("Projection null"); return }
 
-        val vd = proj.createVirtualDisplay(
-            "auto_math_cap",
-            w, h, density,
-            0,
-            reader.surface, null, handler
-        )
+        val vd = proj.createVirtualDisplay("auto_math_cap", w, h, density, 0, reader.surface, null, handler)
 
         handler.postDelayed({
             var image: Image? = null
@@ -215,5 +211,17 @@ class MathTapAccessibilityService : AccessibilityService() {
         btn?.let { runCatching { wm.removeView(it) } }
         status?.let { runCatching { wm.removeView(it) } }
         btn = null; status = null
+        stopProjectionFg()
+    }
+
+    private object WindowLayout {
+        fun params(x: Int, y: Int): WindowManager.LayoutParams =
+            WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT
+            ).apply { gravity = Gravity.TOP or Gravity.START; this.x = x; this.y = y }
     }
 }
