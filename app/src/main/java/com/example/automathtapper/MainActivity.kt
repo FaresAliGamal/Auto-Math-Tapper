@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import com.example.automathtapper.databinding.ActivityMainBinding
+import android.widget.SeekBar
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,14 +30,14 @@ class MainActivity : AppCompatActivity() {
         binding.seekSpeed.progress = (current - MIN_INTERVAL).coerceIn(0, binding.seekSpeed.max)
         binding.tvSpeed.text = "Speed: ${current} ms"
 
-        binding.seekSpeed.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+        binding.seekSpeed.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 val value = MIN_INTERVAL + progress
                 binding.tvSpeed.text = "Speed: ${value} ms"
                 prefs.edit().putInt(KEY_INTERVAL_MS, value).apply()
             }
-            override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
         binding.btnOpenSettings.setOnClickListener {

@@ -2,16 +2,23 @@ package com.example.automathtapper.service
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
-import android.graphics.*
-import android.os.*
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.Path
+import android.graphics.PixelFormat
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
-import android.view.*
+import android.view.Gravity
+import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import androidx.annotation.RequiresApi
 import com.example.automathtapper.MainActivity
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import android.widget.TextView
 
 class MathTapAccessibilityService : AccessibilityService() {
 
@@ -19,7 +26,7 @@ class MathTapAccessibilityService : AccessibilityService() {
     private val recognizer by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
 
     private var isRunning = false
-    private var overlayView: View? = null
+    private var overlayView: TextView? = null
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -33,6 +40,7 @@ class MathTapAccessibilityService : AccessibilityService() {
     private fun getIntervalMs(): Long {
         val prefs = getSharedPreferences(MainActivity.PREFS, MODE_PRIVATE)
         return prefs.getInt(MainActivity.KEY_INTERVAL_MS, MainActivity.DEFAULT_INTERVAL).toLong()
+            .coerceIn(MainActivity.MIN_INTERVAL.toLong(), MainActivity.MAX_INTERVAL.toLong())
     }
 
     private fun startLoop() {
@@ -41,14 +49,14 @@ class MathTapAccessibilityService : AccessibilityService() {
                 if (isRunning && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     captureAndSolveApi33()
                 }
-                handler.postDelayed(this, getIntervalMs().coerceIn(200, 2000))
+                handler.postDelayed(this, getIntervalMs())
             }
         })
     }
 
     private fun addFloatingButton() {
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
-        val btn = android.widget.TextView(this).apply {
+        val btn = TextView(this).apply {
             text = "▶"
             textSize = 18f
             setPadding(28, 20, 28, 20)
