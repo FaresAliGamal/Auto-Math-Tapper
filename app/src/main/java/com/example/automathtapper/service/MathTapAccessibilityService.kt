@@ -14,12 +14,12 @@ import android.view.Display
 import android.view.Gravity
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
+import android.widget.TextView
 import androidx.annotation.RequiresApi
 import com.example.automathtapper.MainActivity
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import android.widget.TextView
 import java.util.concurrent.Executor
 
 class MathTapAccessibilityService : AccessibilityService() {
@@ -28,11 +28,12 @@ class MathTapAccessibilityService : AccessibilityService() {
     private val recognizer by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
 
     private var isRunning = false
-    private var overlayView: TextView? = null
+    private var overlayBtn: TextView? = null
+    private var overlayStatus: TextView? = null
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        addFloatingButton()
+        addFloatingUI()
         startLoop()
     }
 
@@ -41,7 +42,8 @@ class MathTapAccessibilityService : AccessibilityService() {
 
     private fun getIntervalMs(): Long {
         val prefs = getSharedPreferences(MainActivity.PREFS, MODE_PRIVATE)
-        return prefs.getInt(MainActivity.KEY_INTERVAL_MS, MainActivity.DEFAULT_INTERVAL).toLong()
+        return prefs.getInt(MainActivity.KEY_INTERVAL_MS, MainActivity.DEFAULT_INTERVAL)
+            .toLong()
             .coerceIn(MainActivity.MIN_INTERVAL.toLong(), MainActivity.MAX_INTERVAL.toLong())
     }
 
@@ -56,8 +58,9 @@ class MathTapAccessibilityService : AccessibilityService() {
         })
     }
 
-    private fun addFloatingButton() {
+    private fun addFloatingUI() {
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
+
         val btn = TextView(this).apply {
             text = "▶"
             textSize = 18f
@@ -67,9 +70,10 @@ class MathTapAccessibilityService : AccessibilityService() {
             setOnClickListener {
                 isRunning = !isRunning
                 text = if (isRunning) "⏸" else "▶"
+                showStatus(if (isRunning) "Started" else "Paused")
             }
         }
-        val lp = WindowManager.LayoutParams(
+        val lpBtn = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
@@ -81,8 +85,92 @@ class MathTapAccessibilityService : AccessibilityService() {
             x = 24
             y = 200
         }
-        wm.addView(btn, lp)
-        overlayView = btn
+        wm.addView(btn, lpBtn)
+        overlayBtn = btn
+
+        val status = TextView(this).apply {
+            text = "Ready"
+            textSize = 14f
+            setPadding(16, 12, 16, 12)
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.parseColor("#AA000000"))
+        }
+        val lpStatus = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            x = 24
+            y = 120
+        }
+        wm.addView(status, lpStatus)
+        overlayStatus = status
+    }
+
+    private fun showStatus(msg: String) {
+        overlayStatus?.post { overlayStatus?.text = msg }
+        Log.d("MathTapper", msg)
+    }
+
+    private fun toAsciiDigits(s: String): String {
+        val arabic = "٠١٢٣٤٥٦٧٨٩"
+        val eastern = "۰۱۲۳۴۵۶۷۸۹"
+        val sb = StringBuilder(s.length)
+        s.forEach { ch ->
+            val idxA = arabic.indexOf(ch)
+            val idxE = eastern.indexOf(ch)
+            when {
+                idxA >= 0 -> sb.append('0' + idxA)
+                idxE >= 0 -> sb.append('0' + idxE)
+                else -> sb.append(ch)
+            }
+        }
+        return sb.toString()
+    }
+
+    private fun toArabicIndicDigits(s: String): String {
+        val map = charArrayOf('٠','١','٢','٣','٤','٥','٦','٧','٨','٩')
+        val sb = StringBuilder(s.length)
+        s.forEach { ch -> if (ch in '0'..'9') sb.append(map[ch - '0']) else sb.append(ch) }
+        return sb.toString()
+    }
+
+    private fun toEasternDigits(s: String): String {
+        val map = charArrayOf('۰','۱','۲','۳','۴','۵','۶','۷','۸','۹')
+        val sb = StringBuilder(s.length)
+        s.forEach { ch -> if (ch in '0'..'9') sb.append(map[ch - '0']) else sb.append(ch) }
+        return sb.toString()
+    }
+
+    private fun normalizeEquation(raw: String): String {
+        val s1 = toAsciiDigits(raw)
+            .replace('×', '*')
+            .replace('x', '*')
+            .replace('X', '*')
+            .replace('÷', '/')
+            .replace('−', '-')
+            .replace('—', '-')
+        return s1.replace("[=?:]".toRegex(), " ")
+            .replace("\\s+".toRegex(), " ")
+            .trim()
+    }
+
+    private fun parseAndSolve(text: String): Pair<String, String>? {
+        val n = normalizeEquation(text)
+        val m = Regex("(-?\\d+)\\s*([+\\-*/])\\s*(-?\\d+)").find(n) ?: return null
+        val (a, op, b) = m.destructured
+        val ans = when (op) {
+            "+" -> a.toLong() + b.toLong()
+            "-" -> a.toLong() - b.toLong()
+            "*" -> a.toLong() * b.toLong()
+            "/" -> if (b.toLong() != 0L) a.toLong() / b.toLong() else 0L
+            else -> Long.MIN_VALUE
+        }.toString()
+        return n to ans
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -99,32 +187,39 @@ class MathTapAccessibilityService : AccessibilityService() {
                             val image = InputImage.fromBitmap(bmp, 0)
                             recognizer.process(image)
                                 .addOnSuccessListener { txt ->
-                                    val all = txt.text
-                                    val m = Regex("(\\d+)\\s*([+\\-x*/×÷])\\s*(\\d+)").find(all)
-                                    if (m != null) {
-                                        val (a, op, b) = m.destructured
-                                        val ans = when (op) {
-                                            "+", "＋" -> a.toInt() + b.toInt()
-                                            "-", "−" -> a.toInt() - b.toInt()
-                                            "x", "×", "*" -> a.toInt() * b.toInt()
-                                            "/", "÷" -> if (b.toInt() != 0) a.toInt() / b.toInt() else 0
-                                            else -> Int.MIN_VALUE
-                                        }.toString()
+                                    val parsed = parseAndSolve(txt.text)
+                                    if (parsed == null) {
+                                        showStatus("No equation")
+                                        return@addOnSuccessListener
+                                    }
+                                    val (equation, answerAscii) = parsed
+                                    val candidates = setOf(
+                                        answerAscii,
+                                        toArabicIndicDigits(answerAscii),
+                                        toEasternDigits(answerAscii)
+                                    )
+                                    showStatus("$equation = $answerAscii")
 
-                                        txt.textBlocks.forEach { block ->
-                                            if (block.text.trim() == ans) {
-                                                block.boundingBox?.let { r ->
+                                    loop@ for (block in txt.textBlocks) {
+                                        for (line in block.lines) {
+                                            for (el in line.elements) {
+                                                val elNorm = normalizeEquation(el.text)
+                                                if (elNorm in candidates) {
+                                                    val r = el.boundingBox ?: continue
                                                     tapAt(r.centerX().toFloat(), r.centerY().toFloat())
-                                                    Log.d("MathTapper", "Tap $ans at ${r.centerX()},${r.centerY()}")
-                                                    return@addOnSuccessListener
+                                                    showStatus("Tapped $elNorm")
+                                                    break@loop
                                                 }
                                             }
                                         }
                                     }
                                 }
                                 .addOnFailureListener { e ->
+                                    showStatus("OCR error")
                                     Log.e("MathTapper", "OCR error: ${e.message}")
                                 }
+                        } else {
+                            showStatus("Bitmap null")
                         }
                     } finally {
                         result.hardwareBuffer.close()
@@ -133,10 +228,12 @@ class MathTapAccessibilityService : AccessibilityService() {
                 }
 
                 override fun onFailure(errorCode: Int) {
-                    Log.e("MathTapper", "Screenshot failed with code=$errorCode")
+                    showStatus("Screenshot failed: $errorCode")
+                    Log.e("MathTapper", "Screenshot failed code=$errorCode")
                 }
             })
         } catch (e: Throwable) {
+            showStatus("Exception: ${e.message}")
             Log.e("MathTapper", "screenshot failure: ${e.message}")
         }
     }
@@ -152,7 +249,11 @@ class MathTapAccessibilityService : AccessibilityService() {
     override fun onDestroy() {
         super.onDestroy()
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
-        overlayView?.let { runCatching { wm.removeView(it) } }
-        overlayView = null
+        overlayBtn?.let { runCatching { wm.removeView(it) } }
+        overlayStatus?.let { runCatching { wm.removeView(it) } }
+        overlayBtn = null
+        overlayStatus = null
     }
+
+    private fun showStatusReady() = showStatus("Ready")
 }
