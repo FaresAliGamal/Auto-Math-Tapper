@@ -10,7 +10,6 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.Gravity
-import android.view.PixelFormat
 import android.graphics.PixelFormat
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
