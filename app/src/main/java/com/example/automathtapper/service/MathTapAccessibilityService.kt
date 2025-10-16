@@ -2,258 +2,218 @@ package com.example.automathtapper.service
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
-import android.graphics.Bitmap
-import android.graphics.Color
-import android.graphics.Path
-import android.graphics.PixelFormat
+import android.graphics.*
+import android.media.Image
+import android.media.ImageReader
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import android.view.Display
 import android.view.Gravity
+import android.view.PixelFormat
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.widget.TextView
-import androidx.annotation.RequiresApi
 import com.example.automathtapper.MainActivity
+import com.example.automathtapper.ProjectionStore
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import java.util.concurrent.Executor
+import java.nio.ByteBuffer
 
 class MathTapAccessibilityService : AccessibilityService() {
 
     private val handler = Handler(Looper.getMainLooper())
     private val recognizer by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
 
-    private var isRunning = false
-    private var overlayBtn: TextView? = null
-    private var overlayStatus: TextView? = null
+    private var running = false
+    private var btn: TextView? = null
+    private var status: TextView? = null
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        addFloatingUI()
-        startLoop()
+        addFloating()
+        loop()
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
     override fun onInterrupt() {}
 
-    private fun getIntervalMs(): Long {
-        val prefs = getSharedPreferences(MainActivity.PREFS, MODE_PRIVATE)
-        return prefs.getInt(MainActivity.KEY_INTERVAL_MS, MainActivity.DEFAULT_INTERVAL)
-            .toLong()
-            .coerceIn(MainActivity.MIN_INTERVAL.toLong(), MainActivity.MAX_INTERVAL.toLong())
+    private fun addFloating() {
+        val wm = getSystemService(WINDOW_SERVICE) as WindowManager
+
+        status = TextView(this).apply {
+            text = "Ready"
+            textSize = 14f
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.parseColor("#88000000"))
+            setPadding(16, 12, 16, 12)
+        }
+        wm.addView(status, WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        ).apply { gravity = Gravity.TOP or Gravity.START; x = 24; y = 120 })
+
+        btn = TextView(this).apply {
+            text = "▶"
+            textSize = 18f
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.parseColor("#7F6200EE"))
+            setPadding(28, 20, 28, 20)
+            setOnClickListener {
+                running = !running
+                text = if (running) "⏸" else "▶"
+                setStatus(if (running) "Started" else "Paused")
+            }
+        }
+        wm.addView(btn, WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        ).apply { gravity = Gravity.TOP or Gravity.START; x = 24; y = 200 })
     }
 
-    private fun startLoop() {
+    private fun setStatus(s: String) { status?.post { status?.text = s }; Log.d("MathTapper", s) }
+
+    private fun interval(): Long {
+        val p = getSharedPreferences(MainActivity.PREFS, MODE_PRIVATE)
+        return p.getInt(MainActivity.KEY_INTERVAL_MS, MainActivity.DEFAULT_INTERVAL).toLong()
+    }
+
+    private fun loop() {
         handler.post(object : Runnable {
             override fun run() {
-                if (isRunning && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    captureAndSolveApi33()
+                if (running) {
+                    captureSolveTap()
                 }
-                handler.postDelayed(this, getIntervalMs())
+                handler.postDelayed(this, interval())
             }
         })
     }
 
-    private fun addFloatingUI() {
-        val wm = getSystemService(WINDOW_SERVICE) as WindowManager
-
-        val btn = TextView(this).apply {
-            text = "▶"
-            textSize = 18f
-            setPadding(28, 20, 28, 20)
-            setTextColor(Color.WHITE)
-            setBackgroundColor(Color.parseColor("#7F6200EE"))
-            setOnClickListener {
-                isRunning = !isRunning
-                text = if (isRunning) "⏸" else "▶"
-                showStatus(if (isRunning) "Started" else "Paused")
-            }
-        }
-        val lpBtn = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = 24
-            y = 200
-        }
-        wm.addView(btn, lpBtn)
-        overlayBtn = btn
-
-        val status = TextView(this).apply {
-            text = "Ready"
-            textSize = 14f
-            setPadding(16, 12, 16, 12)
-            setTextColor(Color.WHITE)
-            setBackgroundColor(Color.parseColor("#AA000000"))
-        }
-        val lpStatus = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = 24
-            y = 120
-        }
-        wm.addView(status, lpStatus)
-        overlayStatus = status
-    }
-
-    private fun showStatus(msg: String) {
-        overlayStatus?.post { overlayStatus?.text = msg }
-        Log.d("MathTapper", msg)
-    }
-
     private fun toAsciiDigits(s: String): String {
-        val arabic = "٠١٢٣٤٥٦٧٨٩"
-        val eastern = "۰۱۲۳۴۵۶۷۸۹"
-        val sb = StringBuilder(s.length)
-        s.forEach { ch ->
-            val idxA = arabic.indexOf(ch)
-            val idxE = eastern.indexOf(ch)
+        val ar = "٠١٢٣٤٥٦٧٨٩"; val fa = "۰۱۲۳۴۵۶۷۸۹"
+        val out = StringBuilder(s.length)
+        for (c in s) {
+            val ia = ar.indexOf(c); val ifa = fa.indexOf(c)
             when {
-                idxA >= 0 -> sb.append('0' + idxA)
-                idxE >= 0 -> sb.append('0' + idxE)
-                else -> sb.append(ch)
+                ia >= 0 -> out.append('0' + ia)
+                ifa >= 0 -> out.append('0' + ifa)
+                else -> out.append(c)
             }
         }
-        return sb.toString()
+        return out.toString()
     }
 
-    private fun toArabicIndicDigits(s: String): String {
-        val map = charArrayOf('٠','١','٢','٣','٤','٥','٦','٧','٨','٩')
-        val sb = StringBuilder(s.length)
-        s.forEach { ch -> if (ch in '0'..'9') sb.append(map[ch - '0']) else sb.append(ch) }
-        return sb.toString()
-    }
+    private fun normalize(t: String): String =
+        toAsciiDigits(t)
+            .replace('×','*').replace('x','*').replace('X','*')
+            .replace('÷','/').replace('−','-').replace('—','-')
+            .replace("[=?:]".toRegex()," ")
+            .replace("\\s+".toRegex()," ").trim()
 
-    private fun toEasternDigits(s: String): String {
-        val map = charArrayOf('۰','۱','۲','۳','۴','۵','۶','۷','۸','۹')
-        val sb = StringBuilder(s.length)
-        s.forEach { ch -> if (ch in '0'..'9') sb.append(map[ch - '0']) else sb.append(ch) }
-        return sb.toString()
-    }
-
-    private fun normalizeEquation(raw: String): String {
-        val s1 = toAsciiDigits(raw)
-            .replace('×', '*')
-            .replace('x', '*')
-            .replace('X', '*')
-            .replace('÷', '/')
-            .replace('−', '-')
-            .replace('—', '-')
-        return s1.replace("[=?:]".toRegex(), " ")
-            .replace("\\s+".toRegex(), " ")
-            .trim()
-    }
-
-    private fun parseAndSolve(text: String): Pair<String, String>? {
-        val n = normalizeEquation(text)
+    private fun parseSolve(text: String): Pair<String,String>? {
+        val n = normalize(text)
         val m = Regex("(-?\\d+)\\s*([+\\-*/])\\s*(-?\\d+)").find(n) ?: return null
-        val (a, op, b) = m.destructured
-        val ans = when (op) {
-            "+" -> a.toLong() + b.toLong()
-            "-" -> a.toLong() - b.toLong()
-            "*" -> a.toLong() * b.toLong()
-            "/" -> if (b.toLong() != 0L) a.toLong() / b.toLong() else 0L
-            else -> Long.MIN_VALUE
+        val (a,op,b) = m.destructured
+        val ans = when(op){
+            "+" -> a.toLong()+b.toLong()
+            "-" -> a.toLong()-b.toLong()
+            "*" -> a.toLong()*b.toLong()
+            "/" -> if (b.toLong()!=0L) a.toLong()/b.toLong() else 0L
+            else -> 0L
         }.toString()
         return n to ans
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private fun captureAndSolveApi33() {
-        try {
-            val displayId = Display.DEFAULT_DISPLAY
-            val exec: Executor = mainExecutor
-
-            takeScreenshot(displayId, exec, object : AccessibilityService.TakeScreenshotCallback {
-                override fun onSuccess(result: AccessibilityService.ScreenshotResult) {
-                    val bmp = Bitmap.wrapHardwareBuffer(result.hardwareBuffer, result.colorSpace)
-                    try {
-                        if (bmp != null) {
-                            val image = InputImage.fromBitmap(bmp, 0)
-                            recognizer.process(image)
-                                .addOnSuccessListener { txt ->
-                                    val parsed = parseAndSolve(txt.text)
-                                    if (parsed == null) {
-                                        showStatus("No equation")
-                                        return@addOnSuccessListener
-                                    }
-                                    val (equation, answerAscii) = parsed
-                                    val candidates = setOf(
-                                        answerAscii,
-                                        toArabicIndicDigits(answerAscii),
-                                        toEasternDigits(answerAscii)
-                                    )
-                                    showStatus("$equation = $answerAscii")
-
-                                    loop@ for (block in txt.textBlocks) {
-                                        for (line in block.lines) {
-                                            for (el in line.elements) {
-                                                val elNorm = normalizeEquation(el.text)
-                                                if (elNorm in candidates) {
-                                                    val r = el.boundingBox ?: continue
-                                                    tapAt(r.centerX().toFloat(), r.centerY().toFloat())
-                                                    showStatus("Tapped $elNorm")
-                                                    break@loop
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                .addOnFailureListener { e ->
-                                    showStatus("OCR error")
-                                    Log.e("MathTapper", "OCR error: ${e.message}")
-                                }
-                        } else {
-                            showStatus("Bitmap null")
-                        }
-                    } finally {
-                        result.hardwareBuffer.close()
-                        bmp?.recycle()
-                    }
-                }
-
-                override fun onFailure(errorCode: Int) {
-                    showStatus("Screenshot failed: $errorCode")
-                    Log.e("MathTapper", "Screenshot failed code=$errorCode")
-                }
-            })
-        } catch (e: Throwable) {
-            showStatus("Exception: ${e.message}")
-            Log.e("MathTapper", "screenshot failure: ${e.message}")
+    private fun captureSolveTap() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return
+        if (!ProjectionStore.hasProjection()) {
+            setStatus("Need screen-capture permission")
+            return
         }
+        val dm = resources.displayMetrics
+        val w = dm.widthPixels
+        val h = dm.heightPixels
+        val density = dm.densityDpi
+
+        val reader = ImageReader.newInstance(w, h, PixelFormat.RGBA_8888, 2)
+        val proj = ProjectionStore.getProjection(this) ?: run { setStatus("Projection null"); return }
+
+        val vd = proj.createVirtualDisplay(
+            "auto_math_cap",
+            w, h, density,
+            0,
+            reader.surface, null, handler
+        )
+
+        handler.postDelayed({
+            var image: Image? = null
+            try {
+                image = reader.acquireLatestImage()
+                if (image == null) { setStatus("No frame"); return@postDelayed }
+                val bmp = imageToBitmap(image)
+                val img = InputImage.fromBitmap(bmp, 0)
+                recognizer.process(img)
+                    .addOnSuccessListener { txt ->
+                        val parsed = parseSolve(txt.text)
+                        if (parsed == null) { setStatus("No equation"); return@addOnSuccessListener }
+                        val (eq, ansAscii) = parsed
+                        setStatus("$eq = $ansAscii")
+                        loop@ for (b in txt.textBlocks) {
+                            for (l in b.lines) for (e in l.elements) {
+                                if (normalize(e.text) == ansAscii) {
+                                    val r = e.boundingBox ?: continue
+                                    tap(r.centerX().toFloat(), r.centerY().toFloat())
+                                    setStatus("Tap $ansAscii")
+                                    break@loop
+                                }
+                            }
+                        }
+                    }
+                    .addOnFailureListener { setStatus("OCR error") }
+                bmp.recycle()
+            } finally {
+                image?.close()
+                vd.release()
+                reader.close()
+            }
+        }, 120)
     }
 
-    private fun tapAt(x: Float, y: Float) {
+    private fun imageToBitmap(image: Image): Bitmap {
+        val plane = image.planes[0]
+        val buf: ByteBuffer = plane.buffer
+        val pixelStride = plane.pixelStride
+        val rowStride = plane.rowStride
+        val rowPadding = rowStride - pixelStride * image.width
+        val bmp = Bitmap.createBitmap(
+            image.width + rowPadding / pixelStride,
+            image.height,
+            Bitmap.Config.ARGB_8888
+        )
+        bmp.copyPixelsFromBuffer(buf)
+        return Bitmap.createBitmap(bmp, 0, 0, image.width, image.height)
+    }
+
+    private fun tap(x: Float, y: Float) {
         val path = Path().apply { moveTo(x, y) }
-        val gesture = GestureDescription.Builder()
+        val g = GestureDescription.Builder()
             .addStroke(GestureDescription.StrokeDescription(path, 0, 100))
             .build()
-        dispatchGesture(gesture, null, null)
+        dispatchGesture(g, null, null)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
-        overlayBtn?.let { runCatching { wm.removeView(it) } }
-        overlayStatus?.let { runCatching { wm.removeView(it) } }
-        overlayBtn = null
-        overlayStatus = null
+        btn?.let { runCatching { wm.removeView(it) } }
+        status?.let { runCatching { wm.removeView(it) } }
+        btn = null; status = null
     }
-
-    private fun showStatusReady() = showStatus("Ready")
 }
