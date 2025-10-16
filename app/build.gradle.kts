@@ -49,13 +49,15 @@ android {
 }
 
 dependencies {
-    implementation("com.google.mlkit:text-recognition:16.0.0")
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+
+    // ML Kit Text Recognition (available version)
+    implementation("com.google.mlkit:text-recognition:16.0.1")
 }
 
 kotlin { jvmToolchain(17) }
