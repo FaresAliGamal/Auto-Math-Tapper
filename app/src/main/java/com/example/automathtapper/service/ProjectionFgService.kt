@@ -1,67 +1,52 @@
 package com.example.automathtapper.service
 
-import com.example.automathtapper.ErrorBus
-import com.example.automathtapper.ErrorOverlay
-
+import android.app.Service
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.Service
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 
 class ProjectionFgService : Service() {
+
     companion object {
-        @Volatile var ready: Boolean = false
-        fun ensureRunning(ctx: android.content.Context) {
-            try {
-                val i = Intent(ctx, ProjectionFgService::class.java)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                    ctx.startForegroundService(i)
-                else
-                    ctx.startService(i)
-            } catch (e: Throwable) {
-                ErrorBus.post("FGS: " + (e.message ?: e.toString()))
-            }
-        }
+        const val CHANNEL_ID = "projection_fg_channel"
+        const val NOTIF_ID = 101
     }
 
     override fun onCreate() {
         super.onCreate()
-        try {
-            ErrorOverlay.init(applicationContext)
-            val cid = "proj_fg"
-            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                if (nm.getNotificationChannel(cid) == null)
-                    nm.createNotificationChannel(NotificationChannel(cid, "Projection FG", NotificationManager.IMPORTANCE_LOW))
-            }
-
-            val notif: Notification = NotificationCompat.Builder(this, cid)
-                .setSmallIcon(android.R.drawable.ic_media_play)
-                .setContentTitle("Projection FG")
-                .setContentText("Ready")
-                .setOngoing(true)
-                .build()
-            ErrorBus.post("Starting FGS")
-            startForeground(1001, notif)
-            ready = true
-        } catch (e: Throwable) {
-            ErrorBus.post("FGS: " + (e.message ?: e.toString()))
-        }
+        createNotificationChannel()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
-    override fun onBind(intent: Intent?): IBinder? = null
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("AutoMathTapper")
+            .setContentText("Projection service running")
+            .setSmallIcon(android.R.drawable.ic_media_play)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
+        startForeground(NOTIF_ID, notification)
+        return START_STICKY
+    }
+
+    override fun onBind(intent: Intent?): IBinder? {
+        return null
+    }
 
     override fun onDestroy() {
-        try {
-            ready = false
-            super.onDestroy()
-        } catch (e: Throwable) {
-            ErrorBus.post("FGS: " + (e.message ?: e.toString()))
+        stopForeground(true)
+        super.onDestroy()
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            val ch = NotificationChannel(CHANNEL_ID, "Projection FG", NotificationManager.IMPORTANCE_LOW)
+            nm.createNotificationChannel(ch)
         }
     }
 }
