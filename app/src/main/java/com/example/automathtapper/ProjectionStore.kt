@@ -6,20 +6,12 @@ import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 
 object ProjectionStore {
-    @Volatile private var resultCode: Int? = null
-    @Volatile private var data: Intent? = null
-
-    fun set(resultCode: Int, data: Intent) {
-        this.resultCode = resultCode
-        this.data = data
-    }
-
-    fun hasProjection(): Boolean = resultCode != null && data != null
-
+    @Volatile private var dataIntent: Intent? = null
+    fun setIntent(data: Intent) { dataIntent = data }
+    fun hasProjection(): Boolean = dataIntent != null
     fun getProjection(ctx: Context): MediaProjection? {
-        val rc = resultCode ?: return null
-        val dt = data ?: return null
-        val mgr = ctx.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        return mgr.getMediaProjection(rc, dt)
+        val di = dataIntent ?: return null
+        val mpm = ctx.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        return mpm.getMediaProjection(Activity.RESULT_OK, di)
     }
 }

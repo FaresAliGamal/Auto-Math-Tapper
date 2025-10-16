@@ -1,0 +1,42 @@
+[
+    {
+        "merged": "com.example.automathtapper.app-debug-37:/xml_accessibility_service_config.xml.flat",
+        "source": "com.example.automathtapper.app-main-39:/xml/accessibility_service_config.xml"
+    },
+    {
+        "merged": "com.example.automathtapper.app-debug-37:/mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "com.example.automathtapper.app-main-39:/mipmap-xhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.example.automathtapper.app-debug-37:/mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "com.example.automathtapper.app-main-39:/mipmap-hdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.example.automathtapper.app-debug-37:/xml_accessibility_config.xml.flat",
+        "source": "com.example.automathtapper.app-main-39:/xml/accessibility_config.xml"
+    },
+    {
+        "merged": "com.example.automathtapper.app-debug-37:/layout_activity_main.xml.flat",
+        "source": "com.example.automathtapper.app-main-39:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.example.automathtapper.app-debug-37:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.example.automathtapper.app-main-39:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.example.automathtapper.app-debug-37:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.example.automathtapper.app-main-39:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.example.automathtapper.app-debug-37:/mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "com.example.automathtapper.app-main-39:/mipmap-mdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.example.automathtapper.app-debug-37:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.example.automathtapper.app-main-39:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.example.automathtapper.app-debug-37:/layout_activity_select_area.xml.flat",
+        "source": "com.example.automathtapper.app-main-39:/layout/activity_select_area.xml"
+    }
+]

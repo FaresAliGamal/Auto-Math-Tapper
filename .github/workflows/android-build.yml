@@ -1,4 +1,4 @@
-name: Android CI
+name: Build Debug APK
 on:
   push:
     branches: [ main ]
@@ -15,9 +15,9 @@ jobs:
           java-version: '17'
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-      - name: Accept licenses & install build-tools/platforms
+      - name: Accept Licenses & install tools
         run: |
-          sdkmanager --licenses <<<'y'
+          yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
       - name: Build
         run: ./gradlew --no-daemon clean assembleDebug

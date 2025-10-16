@@ -1,0 +1,30 @@
+R_DEF: Internal format may change without notice
+local
+id btn_answers
+id btn_open_settings
+id btn_question
+id btn_reset
+id btn_save
+id seek_speed
+id select_view
+id tv_hint
+id tv_speed
+layout activity_main
+layout activity_select_area
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+string hint_select
+string reset
+string save
+string select_answers
+string select_question
+string service_description
+string service_label
+string service_summary
+string set_regions
+string start_service
+string toggle
+style Theme.AutoMathTapper
+xml accessibility_config
+xml accessibility_service_config
