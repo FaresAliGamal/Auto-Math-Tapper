@@ -1,72 +1,54 @@
-import java.util.Base64
-import java.io.File
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("kotlin-android")
+    id("kotlin-kapt")
 }
 
 android {
     namespace = "com.example.automathtapper"
-    compileSdk = 34
+    compileSdk = 33
 
     defaultConfig {
         applicationId = "com.example.automathtapper"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
+        multiDexEnabled = true
         vectorDrawables.useSupportLibrary = true
     }
 
-    // إعدادات التوقيع (اختيارية)
-    signingConfigs {
-        create("release") {
-            val ksB64 = System.getenv("RELEASE_KEYSTORE_BASE64")
-            if (ksB64 != null) {
-                val ksBytes = Base64.getDecoder().decode(ksB64)
-                val tmp = File("${project.buildDir}/tmp-keystore.jks")
-                tmp.parentFile.mkdirs()
-                tmp.writeBytes(ksBytes)
-                storeFile = tmp
-                storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
-                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
-            }
-        }
-    }
-
     buildTypes {
-        debug {
-            isMinifyEnabled = false
+        getByName("debug") {
+            isDebuggable = true
         }
-        release {
+        getByName("release") {
             isMinifyEnabled = false
-            if (System.getenv("RELEASE_KEYSTORE_BASE64") != null) {
-                signingConfig = signingConfigs.getByName("release")
-            }
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
+        dataBinding = true
         viewBinding = true
     }
-    packaging.resources.excludes.add("META-INF/*")
+
+    kotlinOptions {
+        jvmTarget = "17"
+        freeCompilerArgs += listOf("-Xjvm-default=all")
+    }
+
+    packaging {
+        resources.excludes.add("META-INF/*")
+    }
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.activity:activity-ktx:1.9.2")
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    // OCR مكتبة التعرف على النصوص
-    implementation("com.google.mlkit:text-recognition:16.0.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
 }

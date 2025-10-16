@@ -17,7 +17,11 @@ class RequestProjectionActivity : Activity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == ProjectionStore.REQ_CODE) {
-            ProjectionStore.onActivityResult(resultCode, data)
+            try {
+                ProjectionStore.onActivityResult(resultCode, data)
+            } catch (e: Throwable) {
+                ErrorBus.post("ProjectionError: ${e.message}")
+            }
         }
         finish()
     }

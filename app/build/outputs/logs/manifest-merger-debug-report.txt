@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:1:1-43:12
-INJECTED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:1:1-43:12
-INJECTED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:1:1-43:12
-INJECTED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:1:1-43:12
+ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:1:1-47:12
+INJECTED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:1:1-47:12
+INJECTED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:1:1-47:12
+INJECTED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:1:1-47:12
 MERGED from [androidx.databinding:viewbinding:8.5.2] /home/codespace/.gradle/caches/transforms-4/8d0adb0bcd4546e4ea3021959b28dcbf/transformed/jetified-viewbinding-8.5.2/AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.12.0] /home/codespace/.gradle/caches/transforms-4/30dbe09adc47a6fa3161e128d9fbb6b2/transformed/material-1.12.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /home/codespace/.gradle/caches/transforms-4/269c9730016da6647904e71bb7dfb67f/transformed/constraintlayout-2.1.4/AndroidManifest.xml:2:1-11:12
@@ -68,7 +68,6 @@ MERGED from [androidx.print:print:1.0.0] /home/codespace/.gradle/caches/transfor
 MERGED from [androidx.exifinterface:exifinterface:1.0.0] /home/codespace/.gradle/caches/transforms-4/d30c9354129c4ef4755fbb7debdff010/transformed/exifinterface-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [com.google.android.odml:image:1.0.0-beta1] /home/codespace/.gradle/caches/transforms-4/9f7bae839edb2750a0825fe177fc3c4b/transformed/jetified-image-1.0.0-beta1/AndroidManifest.xml:2:1-9:12
 	package
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:2:5-41
 		INJECTED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml
 	android:versionName
 		INJECTED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml
@@ -76,33 +75,21 @@ MERGED from [com.google.android.odml:image:1.0.0-beta1] /home/codespace/.gradle/
 		INJECTED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml
 	xmlns:android
 		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:1:11-69
+uses-permission#android.permission.FOREGROUND_SERVICE
+ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:3:5-76
+	android:name
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:3:22-74
 uses-permission#android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION
 ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:4:5-93
 	android:name
 		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:4:22-91
-uses-permission#android.permission.CAPTURE_VIDEO_OUTPUT
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:5:5-78
-	android:name
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:5:22-76
-uses-permission#android.permission.PROJECT_MEDIA
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:6:5-71
-	android:name
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:6:22-69
-uses-permission#android.permission.FOREGROUND_SERVICE
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:7:5-76
-	android:name
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:7:22-74
 uses-permission#android.permission.SYSTEM_ALERT_WINDOW
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:8:5-77
+ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:5:5-77
 	android:name
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:8:22-75
-uses-permission#android.permission.RECEIVE_BOOT_COMPLETED
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:9:5-80
-	android:name
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:9:22-78
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:5:22-75
 application
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:11:5-42:19
-INJECTED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:11:5-42:19
+ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:7:5-46:19
+INJECTED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:7:5-46:19
 MERGED from [com.google.android.material:material:1.12.0] /home/codespace/.gradle/caches/transforms-4/30dbe09adc47a6fa3161e128d9fbb6b2/transformed/material-1.12.0/AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.12.0] /home/codespace/.gradle/caches/transforms-4/30dbe09adc47a6fa3161e128d9fbb6b2/transformed/material-1.12.0/AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /home/codespace/.gradle/caches/transforms-4/269c9730016da6647904e71bb7dfb67f/transformed/constraintlayout-2.1.4/AndroidManifest.xml:9:5-20
@@ -142,57 +129,69 @@ MERGED from [com.google.android.odml:image:1.0.0-beta1] /home/codespace/.gradle/
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.13.1] /home/codespace/.gradle/caches/transforms-4/8e0a0bff2d388b6446750efdf4a5758f/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
 	android:label
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:13:9-39
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:9:9-39
 	android:icon
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:14:9-43
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:10:9-43
 	android:allowBackup
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:12:9-35
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:8:9-35
 	android:theme
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:15:9-65
-service#com.example.automathtapper.service.ProjectionFgService
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:17:9-20:63
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:11:9-65
+activity#com.example.automathtapper.RequestProjectionActivity
+ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:13:9-18:61
+	android:excludeFromRecents
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:17:13-46
 	android:exported
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:19:13-37
-	android:foregroundServiceType
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:20:13-60
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:15:13-37
+	android:theme
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:18:13-58
+	android:taskAffinity
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:16:13-36
 	android:name
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:18:13-56
-service#com.example.automathtapper.service.MathTapAccessibilityService
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:22:9-32:19
-	android:exported
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:25:13-36
-	android:permission
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:24:13-79
-	android:name
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:23:13-64
-intent-filter#action:name:android.accessibilityservice.AccessibilityService
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:26:13-28:29
-action#android.accessibilityservice.AccessibilityService
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:27:17-92
-	android:name
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:27:25-89
-meta-data#android.accessibilityservice
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:29:13-31:64
-	android:resource
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:31:17-61
-	android:name
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:30:17-60
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:14:13-54
 activity#com.example.automathtapper.MainActivity
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:34:9-40:20
+ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:20:9-27:20
 	android:exported
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:35:13-36
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:22:13-36
 	android:name
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:34:19-47
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:21:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:36:13-39:29
+ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:23:13-26:29
 action#android.intent.action.MAIN
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:37:17-68
+ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:24:17-68
 	android:name
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:37:25-66
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:24:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:38:17-76
+ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:25:17-76
 	android:name
-		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:38:27-74
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:25:27-74
+service#com.example.automathtapper.service.ProjectionFgService
+ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:29:9-32:63
+	android:exported
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:31:13-37
+	android:foregroundServiceType
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:32:13-60
+	android:name
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:30:13-56
+service#com.example.automathtapper.service.MathTapAccessibilityService
+ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:34:9-44:19
+	android:exported
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:37:13-37
+	android:permission
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:36:13-79
+	android:name
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:35:13-64
+intent-filter#action:name:android.accessibilityservice.AccessibilityService
+ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:38:13-40:29
+action#android.accessibilityservice.AccessibilityService
+ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:39:17-91
+	android:name
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:39:25-89
+meta-data#android.accessibilityservice
+ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:41:13-43:64
+	android:resource
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:43:17-61
+	android:name
+		ADDED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml:42:17-60
 uses-sdk
 INJECTED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /workspaces/Auto-Math-Tapper/app/src/main/AndroidManifest.xml

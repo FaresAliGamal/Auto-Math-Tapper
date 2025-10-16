@@ -18,29 +18,39 @@ class ProjectionFgService : Service() {
                 ctx.startForegroundService(i)
             else
                 ctx.startService(i)
-        }
+        } catch (e: Throwable) { ErrorBus.post("FGS: " + (e.message ?: e.toString())) }
+    }
+
     }
     override fun onCreate() {
+        try {
         super.onCreate()
+        ErrorOverlay.init(applicationContext)
         val cid = "proj_fg"
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (nm.getNotificationChannel(cid) == null)
                 nm.createNotificationChannel(NotificationChannel(cid, "Projection FG", NotificationManager.IMPORTANCE_LOW))
-        }
+        } catch (e: Throwable) { ErrorBus.post("FGS: " + (e.message ?: e.toString())) }
+    }
+
         val notif: Notification = NotificationCompat.Builder(this, cid)
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentTitle("Projection FG")
             .setContentText("Ready")
             .setOngoing(true)
             .build()
-        startForeground(1001, notif)
+        ErrorBus.post("Starting FGS"); startForeground(1001, notif)
         ready = true
+        } catch (e: Throwable) { ErrorBus.post("FGS: " + (e.message ?: e.toString())) }
     }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
     override fun onBind(intent: Intent?): IBinder? = null
     override fun onDestroy() {
         ready = false
         super.onDestroy()
+        } catch (e: Throwable) { ErrorBus.post("FGS: " + (e.message ?: e.toString())) }
     }
+
 }

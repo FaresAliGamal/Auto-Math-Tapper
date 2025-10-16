@@ -1,0 +1,8 @@
+/workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/MathSolver.kt
+/workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/MainActivity.kt
+/workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/ProjectionStore.kt
+/workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/RequestProjectionActivity.kt
+/workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/SelectAreaActivity.kt
+/workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/ui/SelectView.kt
+/workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/ProjectionFgService.kt
+/workspaces/Auto-Math-Tapper/app/src/main/java/com/example/automathtapper/service/MathTapAccessibilityService.kt

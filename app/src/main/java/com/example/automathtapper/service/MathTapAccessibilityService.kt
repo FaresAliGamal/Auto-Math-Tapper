@@ -1,4 +1,7 @@
 package com.example.automathtapper.service
+import com.example.automathtapper.ErrorBus
+import com.example.automathtapper.ErrorOverlay
+package com.example.automathtapper.service
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription

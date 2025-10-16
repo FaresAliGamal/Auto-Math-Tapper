@@ -1,4 +1,6 @@
 package com.example.automathtapper
+import com.example.automathtapper.ErrorBus
+import com.example.automathtapper.ErrorOverlay
 
 import android.content.Intent
 import android.os.Bundle
@@ -12,6 +14,9 @@ class MainActivity : AppCompatActivity() {
         const val DEFAULT_INTERVAL = 1000
     }
     override fun onCreate(savedInstanceState: Bundle?) {
+        ErrorOverlay.init(applicationContext)
+        ErrorBus.post("Ready")
+         {
         super.onCreate(savedInstanceState)
         val sb = SeekBar(this)
         sb.max = 4800
