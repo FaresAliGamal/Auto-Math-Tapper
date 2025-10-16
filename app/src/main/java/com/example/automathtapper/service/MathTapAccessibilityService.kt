@@ -88,14 +88,12 @@ class MathTapAccessibilityService : AccessibilityService() {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun captureAndSolveApi33() {
         try {
-            // استخدم Display.DEFAULT_DISPLAY بدل DISPLAY_ID_MAIN
             val displayId = Display.DEFAULT_DISPLAY
             val exec: Executor = mainExecutor
 
             takeScreenshot(displayId, exec, object : AccessibilityService.TakeScreenshotCallback {
-                override fun onScreenshotTaken(res: AccessibilityService.ScreenshotResult?) {
-                    if (res == null) return
-                    val bmp = Bitmap.wrapHardwareBuffer(res.hardwareBuffer, res.colorSpace)
+                override fun onSuccess(result: AccessibilityService.ScreenshotResult) {
+                    val bmp = Bitmap.wrapHardwareBuffer(result.hardwareBuffer, result.colorSpace)
                     try {
                         if (bmp != null) {
                             val image = InputImage.fromBitmap(bmp, 0)
@@ -124,12 +122,18 @@ class MathTapAccessibilityService : AccessibilityService() {
                                         }
                                     }
                                 }
-                                .addOnFailureListener { e -> Log.e("MathTapper", "OCR error: ${e.message}") }
+                                .addOnFailureListener { e ->
+                                    Log.e("MathTapper", "OCR error: ${e.message}")
+                                }
                         }
                     } finally {
-                        res.hardwareBuffer.close()
+                        result.hardwareBuffer.close()
                         bmp?.recycle()
                     }
+                }
+
+                override fun onFailure(errorCode: Int) {
+                    Log.e("MathTapper", "Screenshot failed with code=$errorCode")
                 }
             })
         } catch (e: Throwable) {
