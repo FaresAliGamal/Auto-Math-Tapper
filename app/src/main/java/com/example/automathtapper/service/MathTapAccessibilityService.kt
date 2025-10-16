@@ -30,7 +30,6 @@ class MathTapAccessibilityService : AccessibilityService() {
     private var btn: TextView? = null
     private var status: TextView? = null
 
-    private var mediaProjection: MediaProjection? = null
     private var mpCallback: MediaProjection.Callback? = null
 
     override fun onServiceConnected() {
@@ -125,24 +124,6 @@ class MathTapAccessibilityService : AccessibilityService() {
         return n to ans
     }
 
-    private fun ensureProjectionRegistered(): Boolean {
-        if (!ProjectionStore.hasProjection()) return false
-        if (mediaProjection == null) {
-            mediaProjection = ProjectionStore.getProjection(this)
-            if (mediaProjection == null) return false
-        }
-        if (mpCallback == null) {
-            mpCallback = object : MediaProjection.Callback() {
-                override fun onStop() {
-                    setStatus("Projection stopped")
-                    mediaProjection = null
-                }
-            }
-            mediaProjection?.registerCallback(mpCallback!!, handler)
-        }
-        return true
-    }
-
     private fun captureSolveTap() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return
         if (!ProjectionFgService.ready) {
@@ -150,9 +131,20 @@ class MathTapAccessibilityService : AccessibilityService() {
             ProjectionFgService.ensureRunning(this)
             return
         }
-        if (!ensureProjectionRegistered()) {
+        if (!ProjectionStore.hasProjection()) {
             setStatus("Need screen-capture permission")
             return
+        }
+
+        val proj = ProjectionStore.getProjection(this) ?: run { setStatus("Projection null"); return }
+
+        if (mpCallback == null) {
+            mpCallback = object : MediaProjection.Callback() {
+                override fun onStop() {
+                    setStatus("Projection stopped")
+                }
+            }
+            proj.registerCallback(mpCallback!!, handler)
         }
 
         val dm = resources.displayMetrics
@@ -161,9 +153,11 @@ class MathTapAccessibilityService : AccessibilityService() {
         val density = dm.densityDpi
 
         val reader = ImageReader.newInstance(w, h, PixelFormat.RGBA_8888, 2)
-        val proj = mediaProjection ?: run { setStatus("Projection null"); return }
-
-        val vd = proj.createVirtualDisplay("auto_math_cap", w, h, density, 0, reader.surface, null, handler)
+        val vd = proj.createVirtualDisplay(
+            "auto_math_cap",
+            w, h, density, 0,
+            reader.surface, null, handler
+        )
 
         handler.postDelayed({
             var image: Image? = null
@@ -228,11 +222,13 @@ class MathTapAccessibilityService : AccessibilityService() {
         btn?.let { runCatching { wm.removeView(it) } }
         status?.let { runCatching { wm.removeView(it) } }
         btn = null; status = null
+
         runCatching {
-            mediaProjection?.unregisterCallback(mpCallback!!)
+            val proj = ProjectionStore.getProjection(this)
+            val cb = mpCallback
+            if (proj != null && cb != null) proj.unregisterCallback(cb)
+            mpCallback = null
         }
-        mediaProjection = null
-        mpCallback = null
     }
 
     private object WindowLayout {
